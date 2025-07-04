@@ -3,7 +3,23 @@
   "builds": [
     {
       "src": "api_modelo.py",
-      "use": "@vercel/python"
+      "use": "@vercel/python",
+      "config": {
+        "excludeFiles": [
+          "ml/**",
+          "modelo.ipynb",
+          "predictions.db",
+          "__pycache__/**",
+          "*.pyc",
+          "*.pyo",
+          "*.pyd",
+          ".git/**",
+          ".DS_Store",
+          "README.md",
+          ".gitignore",
+          ".vercelignore"
+        ]
+      }
     }
   ],
   "routes": [

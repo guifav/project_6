@@ -7,8 +7,8 @@ from functools import wraps
 
 from flask import Flask, request, jsonify
 import joblib
-import numpy as np
-from sqlalchemy import create_engine, Column, Integer, Float, String, DateTime
+from numpy import array
+from sqlalchemy import create_engine, Column, Integer, Float, DateTime
 from sqlalchemy.orm import sessionmaker, declarative_base
 
 JWT_SECRET = "MINHASENHA"
@@ -156,7 +156,7 @@ def predict():
         logger.info("Cache hit para %s", features)
         prediction = prediction_cache[features_tuple]
     else:
-        input_data = np.array([features])
+        input_data = array([features])
         prediction = model.predict(input_data)[0]
         predicted_class = int(prediction)
         prediction_cache[features_tuple] = predicted_class
