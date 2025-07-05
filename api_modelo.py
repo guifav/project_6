@@ -17,8 +17,9 @@ JWT_EXPIRATION_DELTA = datetime.timedelta(hours=1)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("apli_modelo")
 
-DATABASE_URL="sqlite:///predictions.db"
-engine = create_engine(DATABASE_URL, echo=False)
+# Configuração do banco de dados para ambiente serverless
+DATABASE_URL = os.getenv('DATABASE_URL', 'sqlite:///predictions.db')
+engine = create_engine(DATABASE_URL, echo=False, pool_pre_ping=True)
 Base = declarative_base()
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -32,7 +33,12 @@ class Prediction(Base):
     predicted_class = Column(Integer, nullable=False)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
-Base.metadata.create_all(bind=engine)
+# Criar tabelas apenas se necessário
+try:
+    Base.metadata.create_all(bind=engine)
+    logger.info("Banco de dados inicializado com sucesso")
+except Exception as e:
+    logger.warning(f"Aviso na inicialização do banco: {e}")
 
 # Modelo simples baseado em regras para classificação de íris
 def simple_iris_model(sepal_length, sepal_width, petal_length, petal_width):
@@ -82,22 +88,36 @@ app.config['SECRET_KEY'] = 'chave_secreta'
 
 prediction_cache = {}
 
+@app.route('/', methods=['GET'])
+def health_check():
+    """Endpoint de health check"""
+    return jsonify({
+        'status': 'healthy',
+        'message': 'API de Classificação de Íris está funcionando',
+        'version': '1.0.0'
+    })
+
 def save_prediction(sepal_length, sepal_width, petal_length, petal_width, predicted_class):
     """Função para salvar predição no banco de dados"""
-    db = SessionLocal()
     try:
-        db_prediction = Prediction(
-            sepal_length=sepal_length,
-            sepal_width=sepal_width,
-            petal_length=petal_length,
-            petal_width=petal_width,
-            predicted_class=predicted_class
-        )
-        db.add(db_prediction)
-        db.commit()
-        db.refresh(db_prediction)
-    finally:
-        db.close()
+        db = SessionLocal()
+        try:
+            db_prediction = Prediction(
+                sepal_length=sepal_length,
+                sepal_width=sepal_width,
+                petal_length=petal_length,
+                petal_width=petal_width,
+                predicted_class=predicted_class
+            )
+            db.add(db_prediction)
+            db.commit()
+            db.refresh(db_prediction)
+            logger.info("Predição salva com sucesso")
+        finally:
+            db.close()
+    except Exception as e:
+        logger.error(f"Erro ao salvar predição: {e}")
+        # Não falha a API se o banco falhar
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -175,13 +195,6 @@ def predict():
     
     return jsonify({'prediction': int(prediction)})
 
-# Handler para o Vercel
-def handler(request):
-    return app(request.environ, lambda status, headers: None)
-
 # Para desenvolvimento local
 if __name__ == '__main__':
     app.run(debug=True)
-
-# Exportar app para o Vercel
-app = app
