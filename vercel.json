@@ -17,7 +17,29 @@
           ".DS_Store",
           "README.md",
           ".gitignore",
-          ".vercelignore"
+          ".vercelignore",
+          "*.md",
+          "*.txt",
+          "*.log",
+          "*.cache",
+          "*.tmp",
+          "tests/**",
+          "test/**",
+          "docs/**",
+          "examples/**",
+          "*.egg-info/**",
+          "build/**",
+          "dist/**",
+          ".pytest_cache/**",
+          ".coverage",
+          "*.so",
+          "*.dll",
+          "*.dylib",
+          "node_modules/**",
+          ".venv/**",
+          "venv/**",
+          "env/**",
+          ".env/**"
         ]
       }
     }

@@ -1,5 +1,6 @@
 ml/
 modelo.ipynb
+modelo_iris.pkl
 predictions.db
 __pycache__/
 *.pyc

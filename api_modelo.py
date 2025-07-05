@@ -6,8 +6,6 @@ import jwt
 from functools import wraps
 
 from flask import Flask, request, jsonify
-import joblib
-from numpy import array
 from sqlalchemy import create_engine, Column, Integer, Float, DateTime
 from sqlalchemy.orm import sessionmaker, declarative_base
 
@@ -36,8 +34,21 @@ class Prediction(Base):
 
 Base.metadata.create_all(bind=engine)
 
-model = joblib.load('modelo_iris.pkl')
-logger.info("Modelo carregado com sucesso")
+# Modelo simples baseado em regras para classificação de íris
+def simple_iris_model(sepal_length, sepal_width, petal_length, petal_width):
+    """
+    Modelo simples para classificação de íris baseado em regras
+    0: Setosa, 1: Versicolor, 2: Virginica
+    """
+    # Regras baseadas nas características típicas das espécies de íris
+    if petal_length < 2.5:
+        return 0  # Setosa
+    elif petal_length < 5.0 and petal_width < 1.8:
+        return 1  # Versicolor
+    else:
+        return 2  # Virginica
+
+logger.info("Modelo simples carregado com sucesso")
 
 def create_token(user_id):
     payload = {
@@ -156,8 +167,7 @@ def predict():
         logger.info("Cache hit para %s", features)
         prediction = prediction_cache[features_tuple]
     else:
-        input_data = array([features])
-        prediction = model.predict(input_data)[0]
+        prediction = simple_iris_model(sepal_length, sepal_width, petal_length, petal_width)
         predicted_class = int(prediction)
         prediction_cache[features_tuple] = predicted_class
         logger.info("Cache updated para %s", features)
